@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { 
   Check, 
   Copy, 
-  ExternalLink, 
   Bookmark, 
   Volume2, 
   VolumeX, 
@@ -11,10 +10,9 @@ import {
   Clock, 
   Mail, 
   RefreshCw, 
-  Send,
   Columns,
-  Maximize2,
-  FileText
+  MessageSquare,
+  ExternalLink
 } from 'lucide-react';
 import { Drafts, EmailDraft, SavedDraftItem } from '../types';
 
@@ -34,7 +32,7 @@ export const DraftCards: React.FC<DraftCardsProps> = ({
   isDraftSaved,
 }) => {
   const [selectedOption, setSelectedOption] = useState<'option1' | 'option2'>('option1');
-  const [viewMode, setViewMode] = useState<'tabs' | 'compare'>('tabs');
+  const [viewMode, setViewMode] = useState<'compare' | 'tabs'>('compare');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isSpeakingOption, setIsSpeakingOption] = useState<string | null>(null);
   
@@ -51,7 +49,6 @@ export const DraftCards: React.FC<DraftCardsProps> = ({
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(text);
       } else {
-        // Fallback for non-secure contexts
         const textarea = document.createElement('textarea');
         textarea.value = text;
         textarea.style.position = 'fixed';
@@ -78,6 +75,12 @@ export const DraftCards: React.FC<DraftCardsProps> = ({
       ? `Subject: ${draft.subject}\n\n${body}`
       : body;
     copyToClipboard(textToCopy, `${optionKey}-clipboard`);
+  };
+
+  const handleCopyWhatsApp = (draft: EmailDraft, optionKey: string) => {
+    const body = editableBodies[optionKey] || draft.body;
+    const textToCopy = `*Subject: ${draft.subject}*\n\n${body}`;
+    copyToClipboard(textToCopy, `${optionKey}-whatsapp`);
   };
 
   const handleOpenMailClient = (draft: EmailDraft, optionKey: string) => {
@@ -151,257 +154,222 @@ export const DraftCards: React.FC<DraftCardsProps> = ({
 
   const renderSingleDraftCard = (
     draft: EmailDraft,
-    optionKey: 'option1' | 'option2',
-    isCompact = false
+    optionKey: 'option1' | 'option2'
   ) => {
     const currentBody = editableBodies[optionKey] || draft.body;
     const isEditing = editingOption === optionKey;
     const isRefining = refiningOption === optionKey;
     const isSaved = isDraftSaved(draft.subject);
     const isCopied = copiedKey === `${optionKey}-clipboard`;
-    const wordCount = currentBody.trim().split(/\s+/).filter(Boolean).length;
+    const isWaCopied = copiedKey === `${optionKey}-whatsapp`;
+    const isSubjCopied = copiedKey === `${optionKey}-subject`;
+
+    const isOption1 = optionKey === 'option1';
 
     return (
       <div 
         key={optionKey}
-        className={`border rounded-xl overflow-hidden bg-white shadow-sm flex flex-col justify-between transition-all ${
-          optionKey === 'option1'
-            ? 'border-indigo-200 ring-1 ring-indigo-100'
-            : 'border-emerald-200 ring-1 ring-emerald-100'
-        }`}
+        className="border border-slate-800 rounded-3xl overflow-hidden bg-slate-900/90 shadow-2xl flex flex-col justify-between transition-all hover:border-slate-700 relative"
       >
-        {/* Top Info Banner */}
-        <div className="bg-slate-50/90 border-b border-slate-200 p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
-          <div className="flex items-center gap-2">
-            <span
-              className={`px-2.5 py-1 rounded-md text-xs font-extrabold uppercase tracking-wider ${
-                optionKey === 'option1'
-                  ? 'bg-indigo-100 text-indigo-900 border border-indigo-200'
-                  : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
-              }`}
-            >
-              {draft.title}
-            </span>
-            <span className="text-xs text-slate-600 font-medium hidden md:inline">
-              <span className="font-semibold text-slate-800">Best for:</span> {draft.bestFor}
-            </span>
+        {/* Card Header Bar */}
+        <div className="bg-slate-800/80 border-b border-slate-700/80 px-4 sm:px-5 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className={`w-2.5 h-2.5 rounded-full ${isOption1 ? 'bg-cyan-400' : 'bg-violet-400'}`}></span>
+            <div>
+              <span className="text-xs font-bold text-white tracking-wide block">
+                {draft.title}
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">
+                {draft.bestFor}
+              </span>
+            </div>
           </div>
 
-          {/* Prominent Direct 'Copy to Clipboard' Button at the Top */}
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            <button
-              onClick={() => handleCopyEmail(draft, optionKey, true)}
-              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-xs ${
-                isCopied
-                  ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300'
-                  : 'bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 hover:border-slate-400'
-              }`}
-              title="Copy subject and body to clipboard"
-            >
-              {isCopied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-white" />
-                  <span>Copied to Clipboard!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Copy to Clipboard</span>
-                </>
-              )}
-            </button>
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
+            <Clock className="w-3 h-3 text-cyan-400" />
+            <span>{draft.estimatedReadTime || '30 sec read'}</span>
           </div>
         </div>
 
-        {/* Email Header Bar */}
-        <div className="bg-white border-b border-slate-100 p-3.5 space-y-2 text-xs">
-          {/* Recipient */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-400 w-16">To:</span>
-              <span className="font-medium text-slate-800 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                {recipientName || 'Recipient'}
-              </span>
-            </div>
-            <div className="text-slate-400 text-[11px] flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>~{wordCount} words ({draft.estimatedReadTime || '25s read'})</span>
-            </div>
+        {/* Email Meta Bar (To & Subject) */}
+        <div className="px-4 sm:px-5 py-3 bg-slate-950/60 border-b border-slate-800/80 text-xs space-y-2">
+          <div className="flex items-center gap-2 text-slate-400">
+            <span className="font-mono text-[11px] font-bold text-slate-500 w-14">To:</span>
+            <span className="text-slate-200 font-medium truncate">{recipientName}</span>
           </div>
 
-          {/* Subject Line with dedicated copy */}
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="font-semibold text-slate-400 w-16 shrink-0">Subject:</span>
-              <span className="font-semibold text-slate-900 truncate">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2 flex-1 min-w-0">
+              <span className="font-mono text-[11px] font-bold text-slate-500 w-14 shrink-0 pt-0.5">Subject:</span>
+              <span className="text-cyan-300 font-semibold font-mono text-xs break-words">
                 {draft.subject}
               </span>
             </div>
+
             <button
               onClick={() => copyToClipboard(draft.subject, `${optionKey}-subject`)}
-              className="shrink-0 flex items-center gap-1 text-slate-500 hover:text-indigo-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 text-[11px] font-medium transition-colors"
-              title="Copy subject line only"
+              className="text-[10px] text-slate-400 hover:text-cyan-300 font-mono px-2 py-0.5 rounded bg-slate-800 border border-slate-700/80 transition-colors shrink-0"
+              title="Copy subject line"
             >
-              {copiedKey === `${optionKey}-subject` ? (
-                <>
-                  <Check className="w-3 h-3 text-emerald-600" />
-                  <span className="text-emerald-700 font-bold">Subject Copied</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3 h-3" />
-                  <span>Copy Subject</span>
-                </>
-              )}
+              {isSubjCopied ? 'Copied!' : 'Copy'}
             </button>
           </div>
         </div>
 
-        {/* Email Body */}
-        <div className="p-4 sm:p-5 relative flex-1 bg-white">
+        {/* Email Body Area */}
+        <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
           {isEditing ? (
-            <textarea
-              value={currentBody}
-              onChange={(e) =>
-                setEditableBodies((prev) => ({
-                  ...prev,
-                  [optionKey]: e.target.value,
-                }))
-              }
-              rows={isCompact ? 12 : 10}
-              className="w-full text-sm font-sans leading-relaxed text-slate-800 border border-indigo-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
-            />
+            <div className="space-y-3">
+              <textarea
+                rows={9}
+                value={currentBody}
+                onChange={(e) =>
+                  setEditableBodies((prev) => ({
+                    ...prev,
+                    [optionKey]: e.target.value,
+                  }))
+                }
+                className="w-full text-xs sm:text-sm font-sans bg-slate-950 border border-indigo-500/50 rounded-xl p-3 text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-400 leading-relaxed"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setEditingOption(null)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
+                >
+                  Done Editing
+                </button>
+              </div>
+            </div>
           ) : (
-            <div className="text-sm font-sans text-slate-800 whitespace-pre-wrap leading-relaxed select-text font-normal">
+            <div className="text-xs sm:text-sm text-slate-200 font-normal leading-relaxed whitespace-pre-wrap select-text font-sans bg-slate-950/40 p-4 rounded-xl border border-slate-800/60 mb-4 min-h-[160px]">
               {currentBody}
             </div>
           )}
 
-          {isRefining && (
-            <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center gap-2 text-indigo-700 font-semibold text-sm rounded-lg">
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              Refining draft with academic coach...
-            </div>
-          )}
-        </div>
-
-        {/* Quick Refine Toolbar */}
-        <div className="bg-slate-50/70 border-t border-slate-200/80 p-2.5 flex flex-wrap items-center gap-1.5 text-xs">
-          <span className="text-slate-400 font-medium flex items-center gap-1 pl-1 text-[11px]">
-            <Sparkles className="w-3 h-3 text-indigo-500" />
-            Tweak:
-          </span>
-          <button
-            onClick={() => handleQuickRefine(optionKey, 'Make it even more concise, removing any unnecessary wordiness.')}
-            disabled={isRefining}
-            className="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-medium transition-colors"
-          >
-            Trim length
-          </button>
-          <button
-            onClick={() => handleQuickRefine(optionKey, 'Add a clear request to attend upcoming office hours.')}
-            disabled={isRefining}
-            className="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-medium transition-colors"
-          >
-            + Office hours
-          </button>
-          <button
-            onClick={() => handleQuickRefine(optionKey, 'Include a polite reference to syllabus guidelines.')}
-            disabled={isRefining}
-            className="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[11px] font-medium transition-colors"
-          >
-            + Syllabus
-          </button>
-        </div>
-
-        {/* Bottom Action Footer with Primary 'Copy to Clipboard' Button */}
-        <div className="bg-slate-100/90 border-t border-slate-200 p-3 sm:px-4 flex flex-wrap items-center justify-between gap-2.5">
-          <div className="flex items-center gap-1.5">
-            {/* Customize / Edit */}
+          {/* Quick Refine Pills */}
+          <div className="pt-2 pb-3 border-t border-slate-800/80 flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] uppercase font-bold text-slate-500 mr-1 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-cyan-400" />
+              Tweak:
+            </span>
             <button
-              onClick={() => setEditingOption(isEditing ? null : optionKey)}
-              className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${
-                isEditing
-                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-              }`}
+              disabled={isRefining}
+              onClick={() => handleQuickRefine(optionKey, 'Make it even more concise and direct')}
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all disabled:opacity-50"
             >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>{isEditing ? 'Done' : 'Edit'}</span>
+              Shorter
             </button>
-
-            {/* Listen / Voice Readout */}
-            {'speechSynthesis' in window && (
-              <button
-                onClick={() => handleSpeak(currentBody, optionKey)}
-                className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${
-                  isSpeakingOption === optionKey
-                    ? 'bg-amber-100 border-amber-300 text-amber-800'
-                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
-                title="Hear how calm and respectful this email sounds"
-              >
-                {isSpeakingOption === optionKey ? (
-                  <>
-                    <VolumeX className="w-3.5 h-3.5 text-amber-700" />
-                    <span>Stop</span>
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="w-3.5 h-3.5 text-slate-600" />
-                    <span>Listen</span>
-                  </>
-                )}
-              </button>
+            <button
+              disabled={isRefining}
+              onClick={() => handleQuickRefine(optionKey, 'Add a polite mention of attending office hours')}
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all disabled:opacity-50"
+            >
+              + Office Hours
+            </button>
+            <button
+              disabled={isRefining}
+              onClick={() => handleQuickRefine(optionKey, 'Soften tone and express genuine gratitude')}
+              className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all disabled:opacity-50"
+            >
+              + Warmer
+            </button>
+            {isRefining && (
+              <span className="text-[10px] text-cyan-400 font-mono animate-pulse flex items-center gap-1">
+                <RefreshCw className="w-3 h-3 animate-spin" />
+                Refining...
+              </span>
             )}
-
-            {/* Save to Drafts */}
-            <button
-              onClick={() => handleSave(draft, optionKey)}
-              className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${
-                isSaved
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-emerald-600 text-emerald-600' : ''}`} />
-              <span>{isSaved ? 'Saved' : 'Save'}</span>
-            </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Primary 'Copy to Clipboard' Button */}
+          {/* PROMINENT PRIMARY ACTION: COPY TO CLIPBOARD BUTTON */}
+          <div className="space-y-2">
             <button
               onClick={() => handleCopyEmail(draft, optionKey, true)}
-              className={`flex items-center gap-1.5 text-xs px-3.5 py-2 rounded-lg font-bold shadow-xs transition-all ${
+              className={`w-full py-3 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer ${
                 isCopied
-                  ? 'bg-emerald-600 text-white ring-2 ring-emerald-300'
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white ring-2 ring-emerald-400/50 shadow-emerald-600/30'
+                  : isOption1
+                  ? 'bg-gradient-to-r from-cyan-500 via-indigo-600 to-violet-600 hover:from-cyan-400 hover:to-violet-500 text-white shadow-indigo-500/25'
+                  : 'bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-purple-500/25'
               }`}
-              title="Copy complete email with subject line to clipboard"
             >
               {isCopied ? (
                 <>
-                  <Check className="w-4 h-4 text-white" />
-                  <span>Copied to Clipboard!</span>
+                  <Check className="w-4 h-4 text-white animate-bounce" />
+                  <span className="font-extrabold tracking-wide">Copied to Clipboard!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 text-white" />
-                  <span>Copy to Clipboard</span>
+                  <Copy className="w-4 h-4 text-cyan-200" />
+                  <span className="font-bold tracking-wide">Copy to Clipboard</span>
                 </>
               )}
             </button>
 
-            {/* Open in Mail Client */}
-            <button
-              onClick={() => handleOpenMailClient(draft, optionKey)}
-              className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg font-bold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all shadow-xs"
-              title="Open draft directly in your default mail app"
-            >
-              <Send className="w-3.5 h-3.5 text-slate-600" />
-              <span className="hidden sm:inline">Open Mail</span>
-            </button>
+            {/* Secondary Actions Bar */}
+            <div className="flex items-center justify-between gap-1 pt-1 text-[11px]">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleCopyWhatsApp(draft, optionKey)}
+                  className={`px-2.5 py-1 rounded-lg border font-medium flex items-center gap-1 transition-all ${
+                    isWaCopied
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      : 'bg-slate-800/80 text-slate-300 border-slate-700/80 hover:bg-slate-700 hover:text-white'
+                  }`}
+                  title="Copy formatted for WhatsApp/Teams"
+                >
+                  <MessageSquare className="w-3 h-3 text-emerald-400" />
+                  <span>{isWaCopied ? 'Copied WA!' : 'WhatsApp'}</span>
+                </button>
+
+                <button
+                  onClick={() => handleOpenMailClient(draft, optionKey)}
+                  className="px-2.5 py-1 rounded-lg bg-slate-800/80 text-slate-300 border border-slate-700/80 hover:bg-slate-700 hover:text-white transition-all flex items-center gap-1"
+                  title="Open draft in your email client"
+                >
+                  <Mail className="w-3 h-3 text-cyan-400" />
+                  <span>Mail App</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setEditingOption(isEditing ? null : optionKey)}
+                  className="p-1.5 rounded-lg bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/80 transition-colors"
+                  title="Edit text inline"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  onClick={() => handleSpeak(currentBody, optionKey)}
+                  className={`p-1.5 rounded-lg border transition-colors ${
+                    isSpeakingOption === optionKey
+                      ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 animate-pulse'
+                      : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/80'
+                  }`}
+                  title="Listen to draft"
+                >
+                  {isSpeakingOption === optionKey ? (
+                    <VolumeX className="w-3.5 h-3.5" />
+                  ) : (
+                    <Volume2 className="w-3.5 h-3.5" />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleSave(draft, optionKey)}
+                  className={`p-1.5 rounded-lg border transition-colors ${
+                    isSaved
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                      : 'bg-slate-800/80 text-slate-400 hover:text-white border border-slate-700/80'
+                  }`}
+                  title={isSaved ? 'Saved in browser' : 'Save draft'}
+                >
+                  <Bookmark className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -409,96 +377,83 @@ export const DraftCards: React.FC<DraftCardsProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/90 shadow-sm transition-all hover:shadow-md">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-700 font-bold flex items-center justify-center text-sm border border-teal-500/20">
-            03
-          </div>
-          <div>
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-              The Drafts
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 border border-teal-200">
-                2 Tailored Options
-              </span>
-            </h3>
-            <p className="text-xs text-slate-500 font-medium">
-              Click <span className="font-semibold text-slate-800">"Copy to Clipboard"</span> on any draft to paste directly into Gmail, Outlook, or your campus webmail.
-            </p>
-          </div>
+    <div className="space-y-4">
+      {/* Top Controls Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 backdrop-blur-md px-4 py-3 rounded-2xl border border-slate-800 shadow-md">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span className="font-extrabold text-sm text-white">
+            2 Ready-to-Send Drafts
+          </span>
+          <span className="text-xs text-slate-400 font-medium hidden sm:inline">
+            — calibrated for different styles
+          </span>
         </div>
 
-        {/* View Mode & Option Selector */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {/* Toggle between Side-by-Side compare and Tab view */}
-          <div className="flex bg-slate-100 p-1 rounded-xl">
-            <button
-              onClick={() => setViewMode('tabs')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-                viewMode === 'tabs'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Focus on one option at a time"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Tabs</span>
-            </button>
+        {/* View Mode Toggle: Compare vs Tabs */}
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex bg-slate-800 p-1 rounded-xl border border-slate-700/80">
             <button
               onClick={() => setViewMode('compare')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                 viewMode === 'compare'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white'
               }`}
-              title="Compare Option 1 and Option 2 side-by-side"
             >
               <Columns className="w-3.5 h-3.5" />
               <span>Side-by-Side</span>
             </button>
+            <button
+              onClick={() => setViewMode('tabs')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'tabs'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>Single Card</span>
+            </button>
           </div>
 
           {viewMode === 'tabs' && (
-            <div className="flex bg-slate-100 p-1 rounded-xl">
+            <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700/80">
               <button
                 onClick={() => setSelectedOption('option1')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                   selectedOption === 'option1'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-cyan-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
-                Direct & Professional
+                Option 1: Direct
               </button>
               <button
                 onClick={() => setSelectedOption('option2')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                   selectedOption === 'option2'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-violet-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                Soft & Contextual
+                Option 2: Contextual
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Drafts Layout */}
+      {/* Draft Cards Grid */}
       {viewMode === 'compare' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {renderSingleDraftCard(drafts.option1, 'option1', true)}
-          {renderSingleDraftCard(drafts.option2, 'option2', true)}
+          {renderSingleDraftCard(drafts.option1, 'option1')}
+          {renderSingleDraftCard(drafts.option2, 'option2')}
         </div>
       ) : (
-        <div>
+        <div className="max-w-3xl mx-auto">
           {selectedOption === 'option1'
-            ? renderSingleDraftCard(drafts.option1, 'option1', false)
-            : renderSingleDraftCard(drafts.option2, 'option2', false)}
+            ? renderSingleDraftCard(drafts.option1, 'option1')
+            : renderSingleDraftCard(drafts.option2, 'option2')}
         </div>
       )}
     </div>

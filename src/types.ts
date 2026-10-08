@@ -1,19 +1,19 @@
 export type RecipientRole = 
-  | 'Professor'
-  | 'Teaching Assistant (TA)'
-  | 'Academic Advisor'
-  | 'Department Chair / Dean'
-  | 'Campus Recruiter / Hiring Manager'
-  | 'Research PI / Lab Director'
+  | 'Professor / Faculty'
+  | 'HOD (Head of Department)'
+  | 'Project Guide / Research Supervisor'
+  | 'Placement Officer (TPO)'
+  | 'Dean of Academic Affairs'
+  | 'Teaching Assistant / Lab Incharge'
   | 'Group Project Teammate';
 
 export interface CoachingRequest {
   recipient: string;
-  role: RecipientRole;
+  role?: RecipientRole | string;
   courseCode?: string;
   situation: string;
   roughDraft: string;
-  urgency: 'urgent' | 'moderate' | 'calm';
+  urgency?: 'urgent' | 'moderate' | 'calm';
 }
 
 export interface Critique {
@@ -23,8 +23,10 @@ export interface Critique {
 }
 
 export interface Diagnosis {
-  intentValidation: string;
-  critiques: Critique[];
+  intentValidation?: string;
+  validation?: string;
+  critique?: string;
+  critiques?: Critique[];
 }
 
 export interface Strategy {
@@ -46,10 +48,50 @@ export interface Drafts {
   option2: EmailDraft;
 }
 
+export interface FormalLetter {
+  toHeading: string;
+  through?: string;
+  fromHeading: string;
+  date: string;
+  subject: string;
+  salutation: string;
+  body: string;
+  enclosures: string[];
+  signOff: string;
+}
+
+export interface InPersonScript {
+  entrance: string;
+  pitch: string;
+  handover: string;
+  fallback: string;
+}
+
+export interface FollowUpDraft {
+  delay: string;
+  subject: string;
+  body: string;
+}
+
+export interface WhatsAppDraft {
+  text: string;
+  wordCount: number;
+}
+
+export interface StressMetrics {
+  beforeAnxiety: number; // e.g. 88
+  afterAnxiety: number;  // e.g. 6
+  clarityScore: number;  // e.g. 98
+  politenessScore: number; // e.g. 96
+  responseLikelihood: string; // e.g. "94% - Very High"
+}
+
 export interface BreakdownItem {
-  roughPhrase: string;
-  betterPhrase: string;
-  psychologicalReason: string;
+  phrase?: string;
+  why_it_works?: string;
+  roughPhrase?: string;
+  betterPhrase?: string;
+  psychologicalReason?: string;
 }
 
 export interface CoachingResult {
@@ -57,7 +99,12 @@ export interface CoachingResult {
   strategy: Strategy;
   drafts: Drafts;
   breakdown: BreakdownItem[];
-  proTips: string[];
+  proTips?: string[];
+  formalLetter?: FormalLetter;
+  inPersonScript?: InPersonScript;
+  followUpDraft?: FollowUpDraft;
+  whatsappDraft?: WhatsAppDraft;
+  stressMetrics?: StressMetrics;
 }
 
 export interface SavedDraftItem {
@@ -73,7 +120,7 @@ export interface SavedDraftItem {
 export interface ScenarioPreset {
   id: string;
   title: string;
-  category: 'Exams & Grades' | 'Deadlines & Absence' | 'Opportunities & Recs' | 'Interpersonal & Teams';
+  category: 'Internal Exams & CIA' | 'On-Duty (OD) & Attendance' | 'Project Guide & Lab' | 'Placements & Recs' | 'Administration & Dean';
   recipientName: string;
   role: RecipientRole;
   courseCode: string;

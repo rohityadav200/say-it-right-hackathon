@@ -5,14 +5,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
-import { InputStudio } from './components/InputStudio';
-import { DiagnosisView } from './components/DiagnosisView';
-import { StrategyView } from './components/StrategyView';
-import { DraftCards } from './components/DraftCards';
-import { BreakdownView } from './components/BreakdownView';
+import { InputSection } from './components/InputSection';
+import { OutputSection } from './components/OutputSection';
 import { PlaybookView } from './components/PlaybookView';
 import { EtiquetteView } from './components/EtiquetteView';
 import { SavedDraftsView } from './components/SavedDraftsView';
+import { ProfessorInboxSimulator } from './components/ProfessorInboxSimulator';
 import { 
   CoachingRequest, 
   CoachingResult, 
@@ -20,29 +18,21 @@ import {
   ScenarioPreset 
 } from './types';
 import { SCENARIO_PRESETS } from './data/presets';
-import { 
-  Sparkles, 
-  ArrowDown, 
-  GraduationCap, 
-  ShieldCheck, 
-  RefreshCw, 
-  ChevronRight,
-  BookOpen
-} from 'lucide-react';
+import { CheckCircle2, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'coach' | 'playbook' | 'etiquette' | 'saved'>('coach');
-  const [selectedPreset, setSelectedPreset] = useState<ScenarioPreset | null>(SCENARIO_PRESETS[0]);
   const [loading, setLoading] = useState<boolean>(false);
   const [coachingResult, setCoachingResult] = useState<CoachingResult | null>(null);
-  const [currentRequest, setCurrentRequest] = useState<CoachingRequest>({
-    recipient: 'Professor Smith',
-    role: 'Professor',
-    courseCode: 'CS 180',
-    situation: 'I slept through my alarm and missed the midterm exam. I am panicking and terrified I will fail.',
-    roughDraft: 'Prof smith I am so so sorry I missed the exam today I oversleep because my alarm didn\'t go off. Is there any way I can retake it please I need to pass this class.',
-    urgency: 'urgent'
-  });
+  const [showSimulatorModal, setShowSimulatorModal] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Form states initialized with realistic Indian academic context
+  const [recipient, setRecipient] = useState<string>('Dr. Radhika Sundaram (Course In-Charge)');
+  const [situation, setSituation] = useState<string>('Missed Continuous Internal Assessment (CIA-1) exam due to high viral fever');
+  const [roughDraft, setRoughDraft] = useState<string>(
+    "Respected Madam, I am so sorry I missed CIA exam yesterday because I had severe fever and had to visit the clinic. Can I please get a re-test? I am really worried about losing my internal marks and grade."
+  );
 
   const [savedDrafts, setSavedDrafts] = useState<SavedDraftItem[]>(() => {
     try {
@@ -61,24 +51,28 @@ export default function App() {
     }
   }, [savedDrafts]);
 
-  // Run initial coaching on mount for the default scenario so student immediately sees the full 4-step experience!
+  // Initial load: generate initial coaching for quick immediate feedback
   useEffect(() => {
-    handleCoachingSubmit(currentRequest);
+    executeCoaching(recipient, situation, roughDraft);
   }, []);
 
-  const handleCoachingSubmit = async (req: CoachingRequest) => {
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage(prev => (prev === message ? null : prev));
+    }, 2800);
+  };
+
+  const executeCoaching = async (rec: string, sit: string, rough: string) => {
     setLoading(true);
-    setCurrentRequest(req);
     try {
       const response = await fetch('/api/transform', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          recipient: req.recipient,
-          situation: req.situation,
-          roughDraft: req.roughDraft,
-          courseCode: req.courseCode,
-          urgency: req.urgency,
+          recipient: rec,
+          situation: sit,
+          roughDraft: rough,
         }),
       });
 
@@ -95,179 +89,189 @@ export default function App() {
     }
   };
 
-  const handleSelectPreset = (preset: ScenarioPreset) => {
-    setSelectedPreset(preset);
-    const newReq: CoachingRequest = {
-      recipient: preset.recipientName,
-      role: preset.role,
-      courseCode: preset.courseCode,
-      situation: preset.situation,
-      roughDraft: preset.roughDraft,
-      urgency: preset.stressLevel === 'Panicked' ? 'urgent' : preset.stressLevel === 'Stressed' ? 'moderate' : 'calm',
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    executeCoaching(recipient, situation, roughDraft);
+  };
+
+  const handleSelectQuickExample = (example: { recipient: string; situation: string; roughDraft: string }) => {
+    setRecipient(example.recipient);
+    setSituation(example.situation);
+    setRoughDraft(example.roughDraft);
+    showToast(`Loaded scenario: ${example.situation.slice(0, 36)}...`);
+    executeCoaching(example.recipient, example.situation, example.roughDraft);
+  };
+
+  const handleSelectPlaybookPreset = (preset: ScenarioPreset) => {
+    setRecipient(preset.recipientName);
+    setSituation(preset.situation);
+    setRoughDraft(preset.roughDraft);
+    setActiveTab('coach');
+    showToast(`Loaded playbook: ${preset.title}`);
+    executeCoaching(preset.recipientName, preset.situation, preset.roughDraft);
+  };
+
+  const handleSaveDraft = (draft: { recipient: string; situation: string; subject: string; body: string; type: string }) => {
+    const newItem: SavedDraftItem = {
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      recipient: draft.recipient,
+      situation: draft.situation,
+      subject: draft.subject,
+      chosenDraft: draft.body,
+      type: draft.type,
     };
-    handleCoachingSubmit(newReq);
-  };
-
-  const handleSaveDraft = (item: SavedDraftItem) => {
-    setSavedDrafts((prev) => {
-      const exists = prev.find((d) => d.subject === item.subject);
-      if (exists) return prev;
-      return [item, ...prev];
-    });
-  };
-
-  const handleDeleteDraft = (id: string) => {
-    setSavedDrafts((prev) => prev.filter((d) => d.id !== id));
-  };
-
-  const handleClearAllDrafts = () => {
-    setSavedDrafts([]);
-  };
-
-  const isDraftSaved = (subject: string) => {
-    return savedDrafts.some((d) => d.subject === subject);
+    setSavedDrafts(prev => [newItem, ...prev]);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-amber-100 selection:text-amber-900">
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
+      {/* Top Header */}
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         savedCount={savedDrafts.length}
+        onOpenSimulator={() => setShowSimulatorModal(true)}
       />
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8">
-        {/* Banner with Warm Reassurance */}
-        <div className="bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 sm:p-7 shadow-sm relative overflow-hidden">
-          <div className="relative z-10 max-w-2xl">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 mb-3">
-              <GraduationCap className="w-3.5 h-3.5 text-amber-300" />
-              Academic & Professional Etiquette Coach
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2 leading-tight">
-              Say what you mean — without the panic or wrong tone.
-            </h1>
-            <p className="text-xs sm:text-sm text-indigo-100/90 leading-relaxed font-normal">
-              When stakes are high, professors don't judge your emergency; they judge how you handle accountability. We coach you through the 4-step transformation: <span className="font-semibold text-amber-300">Diagnosis</span>, <span className="font-semibold text-amber-300">Strategy</span>, <span className="font-semibold text-amber-300">2 Drafts</span>, and the <span className="font-semibold text-amber-300">Psychology Breakdown</span>.
-            </p>
-          </div>
-          {/* Subtle decoration */}
-          <div className="absolute right-0 top-0 bottom-0 w-80 bg-gradient-to-l from-indigo-600/20 to-transparent pointer-events-none hidden md:block"></div>
-        </div>
-
-        {/* Tab 1: Email Coach Studio */}
+      {/* Main Container */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {activeTab === 'coach' && (
-          <div className="space-y-8">
-            {/* Input Studio */}
-            <section aria-label="Input rough message">
-              <InputStudio
-                onSubmit={handleCoachingSubmit}
-                isLoading={loading}
-                selectedPreset={selectedPreset}
-                onSelectPreset={handleSelectPreset}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column (Input Section) */}
+            <div className="lg:col-span-5 sticky lg:top-24">
+              <InputSection
+                recipient={recipient}
+                setRecipient={setRecipient}
+                situation={situation}
+                setSituation={setSituation}
+                roughDraft={roughDraft}
+                setRoughDraft={setRoughDraft}
+                loading={loading}
+                onSubmit={handleSubmit}
+                onSelectQuickExample={handleSelectQuickExample}
               />
-            </section>
+            </div>
 
-            {/* Results Section */}
-            {loading && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-4 animate-pulse">
-                  <RefreshCw className="w-6 h-6 animate-spin text-indigo-600" />
-                </div>
-                <h3 className="font-bold text-slate-800 text-lg mb-1">
-                  Coaching your draft...
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
-                  Diagnosing potential misinterpretations, designing optimal tone strategy, and polishing Direct & Contextual drafts.
+            {/* Right Column (Output Section) */}
+            <div className="lg:col-span-7">
+              <OutputSection
+                loading={loading}
+                result={coachingResult}
+                recipientName={recipient}
+                situation={situation}
+                onSaveDraft={handleSaveDraft}
+                onOpenSimulator={() => setShowSimulatorModal(true)}
+                onToast={showToast}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'playbook' && (
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Common Academic Situations</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Tested strategies for requests like attendance exemption, recommendations, and lab access.
                 </p>
               </div>
-            )}
-
-            {!loading && coachingResult && (
-              <div className="space-y-6 animate-in fade-in duration-300">
-                {/* Visual Step Process Flow Indicator */}
-                <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-600">
-                  <div className="flex items-center gap-1.5 text-amber-700">
-                    <span className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center text-[11px] font-bold">1</span>
-                    Diagnosis
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-300 hidden sm:block" />
-                  <div className="flex items-center gap-1.5 text-indigo-700">
-                    <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-[11px] font-bold">2</span>
-                    Strategy
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-300 hidden sm:block" />
-                  <div className="flex items-center gap-1.5 text-teal-700">
-                    <span className="w-5 h-5 rounded-full bg-teal-100 flex items-center justify-center text-[11px] font-bold">3</span>
-                    2 Tailored Drafts
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-300 hidden sm:block" />
-                  <div className="flex items-center gap-1.5 text-purple-700">
-                    <span className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center text-[11px] font-bold">4</span>
-                    Psychology Breakdown
-                  </div>
-                </div>
-
-                {/* Step 1: The Diagnosis */}
-                <DiagnosisView diagnosis={coachingResult.diagnosis} />
-
-                {/* Step 2: The Strategy */}
-                <StrategyView strategy={coachingResult.strategy} />
-
-                {/* Step 3: The Drafts (2 Options) */}
-                <DraftCards
-                  drafts={coachingResult.drafts}
-                  recipientName={currentRequest.recipient}
-                  situation={currentRequest.situation}
-                  onSaveDraft={handleSaveDraft}
-                  isDraftSaved={isDraftSaved}
-                />
-
-                {/* Step 4: The Breakdown (Psychological Anatomy) */}
-                <BreakdownView
-                  breakdown={coachingResult.breakdown}
-                  proTips={coachingResult.proTips}
-                />
-              </div>
-            )}
+              <button
+                onClick={() => setActiveTab('coach')}
+                className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium cursor-pointer"
+              >
+                Back to Coach
+              </button>
+            </div>
+            <PlaybookView
+              onLoadPreset={handleSelectPlaybookPreset}
+            />
           </div>
         )}
 
-        {/* Tab 2: Playbook View */}
-        {activeTab === 'playbook' && (
-          <PlaybookView
-            onLoadPreset={(preset) => {
-              handleSelectPreset(preset);
-              setActiveTab('coach');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          />
+        {activeTab === 'etiquette' && (
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Academic Hierarchy & Etiquette</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  How university leadership, department chairs, and faculty interpret titles, tone, and timing.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveTab('coach')}
+                className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium cursor-pointer"
+              >
+                Back to Coach
+              </button>
+            </div>
+            <EtiquetteView />
+          </div>
         )}
 
-        {/* Tab 3: Etiquette Constitution */}
-        {activeTab === 'etiquette' && <EtiquetteView />}
-
-        {/* Tab 4: Saved Drafts */}
         {activeTab === 'saved' && (
-          <SavedDraftsView
-            savedDrafts={savedDrafts}
-            onDeleteDraft={handleDeleteDraft}
-            onClearAll={handleClearAllDrafts}
-          />
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Saved Drafts</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Your bookmarked letters and email templates.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveTab('coach')}
+                className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium cursor-pointer"
+              >
+                Back to Coach
+              </button>
+            </div>
+            <SavedDraftsView
+              savedDrafts={savedDrafts}
+              onDeleteDraft={(id: string) => setSavedDrafts(prev => prev.filter(d => d.id !== id))}
+              onClearAll={() => setSavedDrafts([])}
+              onGoToCoach={() => setActiveTab('coach')}
+            />
+          </div>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-6 mt-12 text-center text-xs text-slate-500">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800">Say It Right</span>
-            <span>• Built for university students navigating high-stakes moments</span>
+      {/* Professor Inbox Simulator Modal */}
+      {showSimulatorModal && coachingResult && (
+        <ProfessorInboxSimulator
+          request={{
+            recipient,
+            role: 'Professor / Faculty',
+            situation,
+            roughDraft,
+            urgency: 'moderate',
+          }}
+          result={coachingResult}
+          onClose={() => setShowSimulatorModal(false)}
+        />
+      )}
+
+      {/* Toast Notification Pill */}
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up pointer-events-none">
+          <div className="px-4 py-2.5 rounded-full bg-gray-900/95 text-white text-xs sm:text-sm font-medium shadow-xl flex items-center gap-2 backdrop-blur-md border border-gray-700/50">
+            <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
+            <span>{toastMessage}</span>
           </div>
-          <div className="flex items-center gap-3 text-slate-400">
-            <span>Non-judgmental mentoring</span>
-            <span>•</span>
-            <span>Academic etiquette</span>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="mt-auto border-t border-gray-200/80 bg-white py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+          <p>
+            Say It Right · Built to reduce university communication anxiety and build student-faculty rapport.
+          </p>
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Gemini AI Coach Active
+            </span>
           </div>
         </div>
       </footer>

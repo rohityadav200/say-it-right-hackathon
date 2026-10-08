@@ -10,48 +10,48 @@ export interface EtiquetteGuide {
 
 export const ETIQUETTE_GUIDES: EtiquetteGuide[] = [
   {
-    id: 'salutation',
-    title: 'The Salutation Hierarchy',
-    badge: 'First Impression',
-    summary: 'How you address an instructor sets the psychological boundary before they read a single sentence.',
-    goldenRule: 'Default to "Dear Professor [Last Name]" or "Dear Dr. [Last Name]" unless they specifically signed their previous email with their first name.',
-    doText: '"Dear Professor Chen," or "Good morning Dr. Rostova,"',
-    dontText: '"Hey," "Hi Prof," "Dear Sir/Madam," or addressing with first name without permission.'
+    id: 'retire-beg-to-state',
+    title: 'Retiring "I Beg to State That..."',
+    badge: 'Modern Professionalism',
+    summary: 'Colonial-era formulas like "I beg to state" or "Most humbly and respectfully I submit" sound dated and submissive rather than professionally confident.',
+    goldenRule: 'Replace archaic pleading with respectful, clear intent: "I am writing to respectfully request..." or "I am writing to bring to your kind attention..."',
+    doText: '"Dear Dr. Chithralekha, I am writing to respectfully request On-Duty attendance approval for..."',
+    dontText: '"Respected Madam, I beg to submit that I am student of your dept..."'
   },
   {
-    id: 'emergency-vs-urgency',
-    title: 'The "Never Transfer Emergency" Rule',
-    badge: 'Psychology',
-    summary: 'A lack of planning or misfortune on your part does not automatically mandate an immediate weekend emergency on theirs.',
-    goldenRule: 'Acknowledge your own responsibility and offer options that respect their time, rather than demanding an instant exception.',
-    doText: '"I understand course policies on makeup exams, but wanted to respectfully ask if any discretionary options exist."',
-    dontText: '"I need you to answer this ASAP because my scholarship is on the line."'
+    id: 'do-the-needful-trap',
+    title: 'The "Kindly Do the Needful" Trap',
+    badge: 'Actionable Clarity',
+    summary: 'Indian students often end emails with "Kindly do the needful ASAP". Faculty and HODs find this vague and passive-aggressive because it pushes the administrative burden back onto them.',
+    goldenRule: 'State the exact next step you need: whether it is a signature on an OD form, a 10-minute meeting in their cabin, or verification of an attached medical certificate.',
+    doText: '"Could you kindly sign the attached OD form, or advise if I should visit your cabin after 3 PM today?"',
+    dontText: '"Please look into this and kindly do the needful ASAP."'
   },
   {
-    id: 'subject-line-clarity',
-    title: 'The 3-Part Subject Line Formula',
-    badge: 'Efficiency',
-    summary: 'Professors teach 100 to 300 students across multiple courses. A vague subject line gets delayed.',
-    goldenRule: '[Course Code & Section] + [Topic] + [Urgency/Action Needed]',
-    doText: 'Subject: "CS 180 (Sec 02) - Inquiry regarding Midterm 1 Absence - Student #89423"',
-    dontText: 'Subject: "Question" or "Help please urgent!!!" or blank subject lines.'
+    id: 'reg-number-protocol',
+    title: 'The Register Number & Section Protocol',
+    badge: 'Administrative Courtesy',
+    summary: 'In Indian colleges and central universities, faculty teach 120+ students across multiple sections. Emails without your Register / Roll Number get ignored.',
+    goldenRule: 'Always format your sign-off with: Full Name · Register/Roll Number · Department & Section · Contact Number.',
+    doText: 'Signature: Mukesh Kumar · Reg No: 24PUCS042 · M.Tech Computer Science (Sem 1) · Mobile: +91 98765 43210',
+    dontText: 'Signing off with just your first name: "Regards, Mukesh"'
   },
   {
-    id: 'office-hours-bridge',
-    title: 'The Office Hours Bridge',
-    badge: 'Dispute Resolution',
-    summary: 'Complex conversations (grade reviews, personal crises) go 10x better in person or over Zoom than via email ping-pong.',
-    goldenRule: 'Use email to schedule a conversation, not to argue the merit of your work.',
-    doText: '"Would you have 10 minutes during your Thursday office hours so I can review your feedback on question 4?"',
-    dontText: '"I disagree with your grading and want my points back right now."'
+    id: 'cabin-visit-etiquette',
+    title: 'The Faculty Cabin Etiquette Bridge',
+    badge: 'Discretion & Empathy',
+    summary: 'In Indian universities, internal marks adjustments, condonation approvals, and project reviews are rarely decided purely over email. The email is a polite bridge to a cabin meeting.',
+    goldenRule: 'Use your email to explain the situation, attach proofs (medical slips, hackathon acceptance letters), and request a 5-minute slot during their cabin/office hours.',
+    doText: '"I have attached the hackathon selection email and would be grateful to visit your cabin briefly at your convenience."',
+    dontText: '"Sir change my marks and reply to this email right now."'
   },
   {
-    id: 'grace-over-guilt',
-    title: 'Context Without Oversharing',
-    badge: 'Boundaries',
-    summary: 'You do not need to disclose graphic medical or deeply personal trauma to be believed.',
-    goldenRule: 'State the consequence of the setback on your coursework, not the intimate biological or personal narrative.',
-    doText: '"Due to an unforeseen personal health setback that required urgent care this morning..."',
-    dontText: 'Writing multi-paragraph diary entries detailing bodily illness or room conflict.'
+    id: 'salutation-hierarchy',
+    title: 'Addressing Faculty, HODs & Deans',
+    badge: 'First Impressions',
+    summary: 'Navigating titles in Indian academia: PhD holders should be addressed as "Dr. [Last Name]" or "Professor [Last Name]". Avoid casual "Hi Sir" or "Hey Prof".',
+    goldenRule: 'For Faculty: "Dear Dr. [Surname]" or "Respected Professor [Surname]". For HODs: "Dear Head of Department / Dr. [Surname]". Avoid "Dear Sir/Madam" if you already know their name.',
+    doText: '"Dear Dr. Venkatesh," or "Dear Professor Swaminathan,"',
+    dontText: '"Hey sir," "Hi Prof," or "Dear Sir/Madam"'
   }
 ];

@@ -1,6 +1,6 @@
 {
   "name": "Say It Right - Academic Communication Coach",
-  "description": "Empathetic communication coach helping university students turn rough, stressful thoughts into respectful, effective emails for professors, TAs, and recruiters.",
+  "description": "Say It Right — An AI-powered communication intelligence platform helping university students write respectful, effective emails for Professors, Department Chairs, Project Guides, and Recruiters.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
