@@ -1,0 +1,8 @@
+{
+  "name": "Say It Right - Academic Communication Coach",
+  "description": "Empathetic communication coach helping university students turn rough, stressful thoughts into respectful, effective emails for professors, TAs, and recruiters.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
